@@ -117,27 +117,28 @@ mlops-infrastructure-demo/
 
 2. **Install `uv` globally (if needed):**
    ```bash
-   python -m pip install uv
+   # On macOS/Linux:
+   curl -LsSf https://astral.sh/uv/install.sh | sh
+   # Or via pip:
+   pip install uv
    ```
 
-3. **Create and activate virtual environment:**
+3. **Install dependencies:**
+   ```bash
+   uv sync --all-groups
+   ```
+
+4. **Activate the virtual env (optional):**
    ```bash
    source .venv/bin/activate
    ```
 
-4. **Install dependencies:**
-   ```bash
-   uv install
-   ```
+   Note: you can run commands using `uv run` if you don't want to activate the virtual env.
 
 ### Using `pip` (Alternative)
 
-1. **Generate `requirements.txt`:**
-   ```bash
-   uv pip compile pyproject.toml -o requirements.txt
-   ```
 
-2. **Create and activate virtual environment:**
+1. **Create and activate virtual environment:**
    ```bash
    python -m venv .venv
    # On Windows:
@@ -146,9 +147,23 @@ mlops-infrastructure-demo/
    source .venv/bin/activate
    ```
 
-3. **Install dependencies:**
+2. **Upgrade pip:**
    ```bash
+   pip install --upgrade pip
+   ```
+
+3. **Install dependencies:**
+
+   **Option A**: using the **requirements.txt** (recommended for production).
+
+   ```
    pip install -r requirements.txt
+   ```
+
+   **Option B**: using the **pyproject.toml** (recommended for development).
+
+   ```
+   pip install .
    ```
 
 ## 🧪 Running Tests
