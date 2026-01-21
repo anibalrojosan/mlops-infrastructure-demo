@@ -1,253 +1,337 @@
-# Breast Cancer Prediction MLOps Project
+# MLOps Infrastructure Demo
 
-This project demonstrates a foundational MLOps workflow for deploying a Breast Cancer prediction model as a Flask API. It covers project setup, model training, API development, Dockerization, and automated CI/CD with GitHub Actions.
+A production-ready MLOps workflow demonstrating best practices in machine learning operations, from model training to deployment. This project showcases how to build a maintainable, scalable, and reproducible ML system.
 
-## Project Structure
+## 🎯 Project Purpose
+
+This project demonstrates **production-ready MLOps practices** rather than focusing solely on achieving state-of-the-art model performance. The goal is to showcase best practices in:
+
+- **Reproducible ML Pipelines**: Using scikit-learn pipelines for consistent preprocessing and inference
+- **API Design**: Building robust REST APIs with proper validation and error handling
+- **Containerization**: Multi-service architecture with Docker Compose
+- **CI/CD**: Automated quality gates, testing, and deployment pipelines
+- **Code Quality**: Type checking, linting, and comprehensive testing
+
+## 🔍 Why This Dataset?
+
+The Wisconsin Breast Cancer dataset is used as a **proof-of-concept** to validate the MLOps infrastructure. This choice allows the project to focus on engineering practices rather than model complexity.
+
+**Why not a more complex dataset?**
+1. **Infrastructure First**: The same MLOps practices work for simple or complex models. The value is in the engineering, not the accuracy metric.
+2. **Reproducibility**: A well-understood dataset ensures the infrastructure can be validated correctly before applying to more complex problems.
+3. **Learning Focus**: This project started as a learning exercise to understand MLOps principles—using a simple dataset allows focus on infrastructure, not feature engineering.
+4. **Transferability**: The practices demonstrated here are immediately applicable to any ML project, regardless of dataset complexity.
+
+**The real question this project answers**: *"How do I ensure my ML model works the same way in production as it does in development?"*
+
+## 🔧 What This Project Demonstrates
+
+### 1. Modular & Testable ML Code
+- **Separation of Concerns**: Clear boundaries between data ingestion, preprocessing, training, and inference
+- **Unit Tests**: Comprehensive test coverage for each component (80%+ coverage requirement)
+- **Integration Tests**: End-to-end testing of the full pipeline and API
+
+### 2. Production-Ready API
+- **Input Validation**: Pydantic schemas for strict type checking and validation
+- **Error Handling**: Proper HTTP status codes and meaningful error messages
+- **Logging**: Structured logging for debugging and monitoring
+- **Health Checks**: Monitoring endpoints for service status
+
+### 3. DevOps Best Practices
+- **Docker Containerization**: Multi-stage builds for optimized image sizes
+- **Docker Compose**: Orchestration of multi-service architecture
+- **CI/CD Pipelines**: Automated testing, building, and deployment
+- **Quality Gates**: Linting, type checking, and test coverage requirements before deployment
+
+### 4. Reproducibility & Versioning
+- **Locked Dependencies**: `uv.lock` ensures consistent environments
+- **Versioned Pipelines**: Model artifacts tracked and reproducible
+- **Documentation**: Clear setup and deployment instructions
+
+## 🚀 Key Features
+
+- ✅ **Type-Safe API**: Pydantic validation prevents production errors
+- ✅ **Comprehensive Testing**: Unit and integration tests with 80%+ coverage
+- ✅ **Automated CI/CD**: Quality gates ensure code quality before deployment
+- ✅ **Multi-Container Setup**: Docker Compose for easy local development and deployment
+- ✅ **Modern Python**: Type hints, dependency management with `uv`
+- ✅ **Production-Ready**: Proper error handling, logging, and monitoring
+
+## 📁 Project Structure
 
 ```
-breast-cancer-ops/
+mlops-infrastructure-demo/
 ├── config/                    # Configuration files
-│   ├── docker-compose.yml     # Defines and links multi-container Docker application
-│   ├── Dockerfile.api         # Dockerfile for the Flask API container
-│   └── Dockerfile.streamlit   # Dockerfile for the Streamlit UI container
-├── data/                      # Stores the dataset
+│   ├── docker-compose.yml     # Multi-container Docker application
+│   ├── Dockerfile.api         # Flask API container
+│   └── Dockerfile.streamlit   # Streamlit UI container
+├── data/                      # Dataset storage
 │   └── data.csv
-├── models/                    # Stores the trained model pipeline (created locally)
+├── models/                    # Trained model artifacts
 │   └── model.joblib
+├── notebooks/                 # Exploratory analysis and experimentation
+│   ├── 1.0-eda.ipynb
+│   ├── 2.0-data_preprocessing.ipynb
+│   ├── 3.0-feature_engineering.ipynb
+│   └── 4.0-model_experimentation.ipynb
+├── reports/                   # Generated reports and visualizations
+│   ├── figures/
+│   └── metrics/
 ├── src/                       # Source code
 │   ├── app.py                 # Flask API for model inference
-│   ├── schemas.py             # Defines the request schema for the API
-│   ├── model/                 # Machine Learning model components
-│   │   ├── __init__.py            # Makes 'model' a Python package
-│   │   ├── dat-ingestion.py      # Handles raw data loading
-│   │   ├── data_preprocessing.py  # Contains data cleaning and feature preparation
-│   │   ├── model_inference.py     # Loads trained pipeline and makes predictions
-│   │   ├── model_training.py      # Orchestrates model training and pipeline saving
-│   │   └── pipeline_utils.py      # Defines the scikit-learn pipeline structure
-│   └── streamlit_app.py       # Streamlit user interface for predictions
-├── tests/                     # For unit and integration tests
-│   ├── __init__.py            # Makes 'tests' a Python package
-│   ├── conftest.py            # Shared pytest fixtures across test files
-│   ├── fixtures/
-│   │   └── sample_payload.json    # For API/integration tests
-│   ├── integration/
-│   │   ├── bash_test.sh           # For Linux/macOS or Git Bash
-│   │   └── powershell_test.ps1    # For Windows PowerShell
-│   ├── unit/
-│   │   ├── __init__.py            # Makes 'unit' a Python package
-│   │   ├── data_ingestion/        # Tests for src/model/data_ingestion.py
-│   │   │   └── test_dat-ingestion.py
-│   │   ├── data_preprocessing/    # Tests for src/model/data_preprocessing.py
-│   │   │   ├── test_drop_unnecessary_columns.py
-│   │   │   ├── test_map_diagnosis_to_numerical.py
-│   │   │   └── test_prepare_features_and_target.py
-│   │   ├── model_inference/       # Tests for src/model/model_inference.py
-│   │   │   ├── test_load_pipeline.py
-│   │   │   └── test_predict.py
-│   │   ├── model_training/        # Tests for src/model/model_training.py
-│   │   │   └── test_train_and_save_pipeline.py
-│   │   └── pipeline_utils/        # Tests for src/model/pipeline_utils.py
-│   │       └── test_create_breast_cancer_pipeline.py
-├── .dockerignore              # Files to exclude from Docker build
-├── .gitignore                 # Files to exclude from Git
-├── .python-version            # Python version specification
-├── pyproject.toml             # Project metadata and dependencies (managed by uv)
-├── pytest.ini                 # pytest configuration
-├── README.md                  # Project documentation
-├── requirements.txt           # Project dependencies (generated by uv for pip compatibility)
-└── uv.lock                    # Locked dependency versions (generated by uv for reproducibility)
+│   ├── schemas.py             # Pydantic schemas for API validation
+│   ├── model/                 # ML pipeline components
+│   │   ├── data_ingestion.py
+│   │   ├── data_preprocessing.py
+│   │   ├── model_inference.py
+│   │   ├── model_training.py
+│   │   └── pipeline_utils.py
+│   └── streamlit_app.py       # Streamlit UI for predictions
+├── tests/                     # Test suite
+│   ├── unit/                  # Unit tests for each component
+│   ├── integration/           # Integration tests
+│   └── fixtures/              # Test data
+├── .github/workflows/         # CI/CD workflows
+│   └── main.yml
+├── pyproject.toml             # Project dependencies (managed by uv)
+├── requirements.txt           # Generated requirements for pip
+└── uv.lock                    # Locked dependency versions
 ```
 
-## Setup
+## 🛠️ Setup
 
-Follow these steps to set up the project environment and install dependencies. This project uses `uv` for dependency management, and can also generate a `requirements.txt` file for compatibility with standard `pip` workflows.
+### Prerequisites
+- Python 3.12+
+- Docker and Docker Compose (for containerized deployment)
+- `uv` (recommended) or `pip` for dependency management
 
-### Using `uv` (Recommended for faster setup and reproducibility)
+### Using `uv` (Recommended)
 
-`uv` is a fast Python package installer and virtual environment manager written in Rust.
+`uv` is a fast Python package installer written in Rust, offering faster dependency resolution and installation.
 
-1.  **Clone the repository:**
-    ```bash
-    git clone https://github.com/Anibalrojo/breast-cancer-mlops-workflow
-    cd breast-cancer-ops
-    ```
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/anibalrojosan/mlops-infrastructure-demo
+   cd mlops-infrastructure-demo
+   ```
 
-2.  **Install `uv` globally (if you don't have it):**
-    ```bash
-    python -m pip install uv
-    ```
+2. **Install `uv` globally (if needed):**
+   ```bash
+   python -m pip install uv
+   ```
 
-3.  **Create and activate virtual environment:**
-    ```bash
-    uv venv
-    # Then activate the environment. On Windows PowerShell:
-    .\.venv\Scripts\Activate.ps1
-    # On Linux/macOS:
-    source .venv/bin/activate
-    ```
+3. **Create and activate virtual environment:**
+   ```bash
+   source .venv/bin/activate
+   ```
 
-4.  **Install dependencies:**
-    `uv` will install dependencies defined in `pyproject.toml` and `uv.lock`.
-    ```bash
-    uv install
-    ```
+4. **Install dependencies:**
+   ```bash
+   uv install
+   ```
 
-### Using `pip` (Alternative method)
+### Using `pip` (Alternative)
 
-If you prefer to use standard `pip` for dependency management, you can do so by first generating `requirements.txt` with `uv`.
+1. **Generate `requirements.txt`:**
+   ```bash
+   uv pip compile pyproject.toml -o requirements.txt
+   ```
 
-1.  **Generate `requirements.txt`:**
-    The `requirements.txt` file is generated from `pyproject.toml` using `uv`.
-    ```bash
-    uv pip compile pyproject.toml -o requirements.txt
-    ```
+2. **Create and activate virtual environment:**
+   ```bash
+   python -m venv .venv
+   # On Windows:
+   .\.venv\Scripts\Activate.ps1
+   # On Linux/macOS:
+   source .venv/bin/activate
+   ```
 
-2.  **Create and activate a virtual environment (using `python -m venv` or `conda`):**
-    ```bash
-    python -m venv .venv
-    # Then activate the environment. On Windows PowerShell:
-    .\.venv\Scripts\Activate.ps1
-    # On Linux/macOS:
-    source .venv/bin/activate
-    ```
+3. **Install dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-3.  **Install dependencies using `pip`:**
-    ```bash
-    pip install -r requirements.txt
-    ```
+## 🧪 Running Tests
 
-## Running tests
+The project includes comprehensive tests with a coverage requirement of 80%+.
 
-Once the environment is set up and dependencies are installed, you can run the tests:
+**Run all tests:**
+```bash
+uv run pytest
+```
 
-1.  **Run all tests:**
-    Ensure your virtual environment is activated. Then, from the project root directory, run:
-    ```bash
-    uv run pytest
-    ```
-    `pytest` will automatically discover and run all test files. For more detailed output, use the verbose flag:
-    ```bash
-    uv run pytest -v
-    ```
+**Run with verbose output:**
+```bash
+uv run pytest -v
+```
 
-2.  **Train the Machine Learning Pipeline:**
-    This step will load `data/data.csv`, preprocess it, train the Random Forest classifier within a `scikit-learn` pipeline, evaluate it, and then save the complete trained pipeline to `models/model.joblib`. Ensure your virtual environment is activated and `data/data.csv` is present, then run:
-    ```powershell
-    uv run python -m src.model.model_training
-    ```
-    This will train the pipeline and save it as `models/model.joblib`.
+**Run with coverage report:**
+```bash
+uv run pytest --cov=src --cov-report=term-missing
+```
 
-3.  **Run the Flask API locally:**
-    Ensure your virtual environment is activated and the model pipeline is trained (`models/model.joblib` exists), then run:
-    ```bash
-    uv run python -m src.app
-    ```
-    The API will be accessible at `http://127.0.0.1:5000/`. Keep this running in one terminal.
+## 🚂 Training the Model
 
-## API usage examples
+Train the ML pipeline and save the model artifact:
 
-With the Flask API running locally (as described in the 'Run the Flask API locally' step under 'Running tests'), you can test its endpoints in another terminal:
+```bash
+uv run python -m src.model.model_training
+```
 
-### 1. Health check (`GET /`)
+This will:
+1. Load and preprocess the data
+2. Train a Random Forest classifier within a scikit-learn pipeline
+3. Evaluate the pipeline
+4. Save the complete trained pipeline to `models/model.joblib`
 
-*   **Endpoint:** `GET http://127.0.0.1:5000/`
-*   **Purpose:** Verifies that the service is running and the model is loaded.
+**Note**: The model must be trained before running the API.
 
-    **PowerShell:**
-    ```powershell
-    Invoke-RestMethod -Uri "http://127.0.0.1:5000/" -Method Get
-    ```
+## 🌐 Running the API
 
-    **For Linux/macOS or Git Bash:**
-    ```bash
-    curl http://127.0.0.1:5000/
-    ```
+Start the Flask API locally:
 
-    **Expected Output:**
-    ```json
-    {
-      "model_loaded": true,
-      "status": "healthy"
-    }
-    ```
+```bash
+uv run python -m src.app
+```
 
-### 2. Prediction (`POST /predict`)
+The API will be accessible at `http://127.0.0.1:5000/`
 
-*   **Endpoint:** `POST http://127.0.0.1:5000/predict`
-*   **Purpose:** Receives a JSON payload of features and returns a prediction.
-*   **Request Body Example:** `tests/fixtures/sample_payload.json`
+### API Endpoints
 
-*   **Example Usage via Test Scripts:**
+#### Health Check
+```bash
+GET http://127.0.0.1:5000/
+```
 
-    **For Windows PowerShell:**
-    ```powershell
-    & ".\tests\integration\powershell_test.ps1"
-    ```
+**Response:**
+```json
+{
+  "status": "healthy",
+  "model_loaded": true
+}
+```
 
-    **For Linux/macOS or Git Bash:**
-    ```bash
-    ./tests/integration/bash_test.sh
-    ```
+#### Prediction
+```bash
+POST http://127.0.0.1:5000/predict
+Content-Type: application/json
 
-    (Ensure the Flask API is running locally as described in the 'Run the Flask API locally' step under 'Running tests' before running these scripts.)
+{
+  "radius_mean": 17.99,
+  "texture_mean": 10.38,
+  ...
+}
+```
 
-    **Expected Output:**
-    ```json
-    {
-      "prediction": 1,
-      "probability_benign": 0.1,
-      "probability_malignant": 0.9
-    }
-    ```
-    (Note: `prediction` and `probability` values will depend on your model's output for the given input.)
+**Response:**
+```json
+{
+  "prediction": 1,
+  "probability_benign": 0.1,
+  "probability_malignant": 0.9
+}
+```
 
-## Streamlit UI
+**Example using test scripts:**
+- **Linux/macOS:** `./tests/integration/bash_test.sh`
+- **Windows PowerShell:** `.\tests\integration\powershell_test.ps1`
 
-The Streamlit application (`src/streamlit_app.py`) provides an interactive web interface for making predictions using the Flask API.
+## 🎨 Streamlit UI
 
-1.  **Run the Streamlit application locally:**
-    Ensure your virtual environment is activated and the Flask API is running (as described in the 'Run the Flask API locally' step under 'Running tests'), then run:
-    ```bash
-    streamlit run src/streamlit_app.py
-    ```
-    The UI will open in your browser, typically at `http://localhost:8501`.
+The Streamlit application provides an interactive web interface for making predictions:
 
-## Dockerization
+```bash
+streamlit run src/streamlit_app.py
+```
 
-The project now uses Docker Compose to manage both the Flask API and the Streamlit UI. All Docker configuration files are located in the `config/` directory.
+Ensure the Flask API is running first. The UI will open at `http://localhost:8501`.
 
-1.  **Build and run with Docker Compose:**
-    Ensure the model is trained (`models/model.joblib` exists), then navigate to the project root and run:
-    ```bash
-    docker compose -f config/docker-compose.yml up --build -d
-    ```
-    This will build images for `config/Dockerfile.api` and `config/Dockerfile.streamlit`, and start both services.
-    The Flask API will be accessible via `http://localhost:5000/` and the Streamlit UI via `http://localhost:8501/`.
+## 🐳 Docker Deployment
 
-2.  **Stop Docker Compose services:**
-    ```bash
-    docker compose -f config/docker-compose.yml down
-    ```
-    This will stop and remove all services and their networks.
+The project uses Docker Compose to orchestrate both the Flask API and Streamlit UI services.
 
-## Automated CI/CD (GitHub Actions)
+### Build and Run
 
-A GitHub Actions workflow (`.github/workflows/main.yml`) is configured to automate the following steps on every push to the `main` branch:
+```bash
+docker compose -f config/docker-compose.yml up --build -d
+```
 
-1.  **Checkout code:** Gets the latest code from the repository.
-2.  **Set up Python and install dependencies:** Prepares the environment for model training.
-3.  **Create `models/` directory:** Ensures the directory exists for saving the trained model.
-4.  **Train the model:** Runs `python -m src.model.model_training` to train the model and generate `models/model.joblib`.
-5.  **Build and Push Docker Compose Images:** Builds both API (`config/Dockerfile.api`) and Streamlit UI (`config/Dockerfile.streamlit`) images and pushes them to Docker Hub.
-6.  **Run Docker Compose services (for testing):** Starts both the API and Streamlit UI services in isolated containers.
-7.  **Wait for services to be ready:** A robust loop that polls both API (`/`) and Streamlit UI (`/`) endpoints until both are responsive.
-8.  **Test health and prediction endpoints:** Executes `curl` commands to verify Flask API functionality.
-9.  **Test Streamlit UI is accessible:** Executes `curl` command to verify Streamlit UI responsiveness.
-10. **Clean up Docker Compose services:** Stops and removes all test containers and networks.
+This will:
+- Build optimized images using multi-stage Docker builds
+- Start both API and Streamlit services
+- Make API available at `http://localhost:5000/`
+- Make Streamlit UI available at `http://localhost:8501/`
 
-## Future improvements
+### Stop Services
 
-To further enhance this MLOps project, consider these advanced steps:
+```bash
+docker compose -f config/docker-compose.yml down
+```
 
-1.  **Input Data Schema Validation in `src/app.py`:** Implement a library like `Pydantic` to define a strict and explicit schema for incoming JSON payloads to the `/predict` endpoint, providing robust data validation and clear error messages.
-2.  **Multi-stage Docker Builds:** Optimize the `Dockerfile` by using multi-stage builds. The idea is to reduce the final image size by separating build-time dependencies (e.g., for training) from runtime dependencies (e.g., for serving the API).
+## 🔄 CI/CD Pipeline
+
+The project includes a comprehensive CI/CD pipeline using GitHub Actions (`.github/workflows/main.yml`):
+
+### Quality Gates Job
+1. **Linting**: `ruff` for code style and quality
+2. **Type Checking**: `mypy` for static type analysis
+3. **Testing**: `pytest` with coverage reporting
+4. **Coverage Requirement**: 80% minimum (pipeline fails if below)
+
+### Build & Deploy Job (runs after quality gates pass)
+1. **Train Model**: Train and save model artifact
+2. **Build Docker Images**: Create optimized container images
+3. **Push to Docker Hub**: Store images in registry
+4. **Integration Testing**: Test services in isolated containers
+5. **Health Checks**: Verify API and UI endpoints
+6. **Cleanup**: Remove test containers
+
+This ensures that only tested, validated code reaches production.
+
+## 💡 Key Learnings & Transferability
+
+This project demonstrates practices that are directly transferable to any ML project:
+
+### What You Can Apply to Other Projects
+
+1. **Pipeline Architecture**: The modular pipeline structure works for any ML problem
+2. **API Design Patterns**: Pydantic validation and error handling are universal
+3. **Testing Strategies**: Unit and integration test patterns
+4. **CI/CD Practices**: Quality gates and automated deployment pipelines
+5. **Containerization**: Docker setup that scales from development to production
+
+### Real-World Applications
+
+While this uses a simple dataset, these practices are used by:
+- Teams deploying models to millions of users
+- Companies managing hundreds of models in production
+- Organizations requiring regulatory compliance (healthcare, finance)
+- Startups building ML-first products
+
+**The infrastructure scales regardless of model complexity.**
+
+## 🔮 Future Improvements
+
+Potential enhancements to further strengthen the MLOps workflow:
+
+- **Model Versioning**: Implement MLFlow for experiment tracking and model registry
+- **Monitoring**: Add model performance monitoring and drift detection
+- **A/B Testing**: Framework for comparing model versions in production
+- **Feature Store**: Centralized feature management for multiple models
+- **Automated Retraining**: Scheduled retraining based on data drift or performance degradation
+
+## 📚 Technologies Used
+
+- **ML Framework**: scikit-learn
+- **API Framework**: Flask
+- **UI Framework**: Streamlit
+- **Validation**: Pydantic
+- **Testing**: pytest, pytest-mock
+- **Containerization**: Docker, Docker Compose
+- **CI/CD**: GitHub Actions
+- **Code Quality**: ruff, mypy
+- **Dependency Management**: uv
+
+---
+
+**Remember**: The value of this project is in the **engineering practices**, not the model metrics. These practices ensure your ML models work reliably in production, regardless of the problem domain or dataset complexity.
